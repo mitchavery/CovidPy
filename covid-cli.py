@@ -15,6 +15,10 @@ class colors:
     def prRed(self, input_string):
         colored_string = ("\033[91m {}\033[00m" .format(input_string))
         return colored_string
+    
+    def prGreen(self, input_string):
+        colored_string = ("\033[92m {}\033[00m" .format(input_string))
+        return colored_string
 
     def prYellow(self, input_string):
         colored_string = ("\033[93m {}\033[00m" .format(input_string))
@@ -39,7 +43,7 @@ class COVID(object):
         try:
             mysql_object().mySQL.execute(self.sql_string, values)
             mysql_object().myDB.commit()
-            print('Inserted Successfully')
+            print(colors().prGreen('Inserted Successfully'))
             return True
         except Exception as error:
             print('{} error created'.format(error))
