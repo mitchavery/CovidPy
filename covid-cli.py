@@ -77,6 +77,17 @@ class COVID(object):
             return True
         except Exception as error:
             print(colors().prRed('{} error while inserting '.format(error)))
+<<<<<<< HEAD
+=======
+
+    def delete_mySQL(self, sql_string):
+        try:
+            mysql_object().mySQL.execute(sql_string)
+            mysql_object().myDB.commit()
+            print(colors().prGreen('Deleted values successfully'))
+        except Exception as error:
+            print('{} error while deleting'.format(error))
+>>>>>>> 6c59d24698df0aa7111ff84aa532646189e40ad6
 
     def delete_mySQL(self, sql_string):
         try:
@@ -109,7 +120,10 @@ class COVID(object):
             18), self.sql_scripts['insert_us'])
         covid_19.insert_mySQL(covid_19._getAllData(),
                               self.sql_scripts['insert_global'], True)
+<<<<<<< HEAD
         print(covid_19.get_max(self.sql_scripts['get_max_deaths']))
+=======
+>>>>>>> 6c59d24698df0aa7111ff84aa532646189e40ad6
 
 
 if __name__ == '__main__':
