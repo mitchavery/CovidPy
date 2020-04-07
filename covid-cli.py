@@ -11,11 +11,12 @@ class mysql_object(object):
         self.mySQL = mySQL.mycursor
         self.myDB = mySQL.mydb
 
+
 class colors:
     def prRed(self, input_string):
         colored_string = ("\033[91m {}\033[00m" .format(input_string))
         return colored_string
-    
+
     def prGreen(self, input_string):
         colored_string = ("\033[92m {}\033[00m" .format(input_string))
         return colored_string
@@ -23,6 +24,7 @@ class colors:
     def prYellow(self, input_string):
         colored_string = ("\033[93m {}\033[00m" .format(input_string))
         return colored_string
+
 
 class COVID(object):
 
@@ -39,6 +41,23 @@ class COVID(object):
         values = (self.current_date, confirmed, active, deaths, recovered)
         return values
 
+    def _getAllData(self):
+        global_data = self._covidObject.get_data()
+        for elem in global_data:
+            for key, value in elem.items():
+                if key == 'country':
+                    country = value
+                if key == 'confirmed':
+                    confirmed = value
+                if key == 'active':
+                    active = value
+                if key == 'deaths':
+                    deaths = value
+                if key == 'recovered':
+                    recovered = value
+        values = (country, confirmed, active, deaths, recovered)
+        return values
+
     def insert_mySQL(self, values):
         try:
             mysql_object().mySQL.execute(self.sql_string, values)
@@ -46,7 +65,7 @@ class COVID(object):
             print(colors().prGreen('Inserted Successfully'))
             return True
         except Exception as error:
-            print('{} error created'.format(error))
+            print(colors().prRed('{} error created'.format(error)))
 
     def main(self):
         covid_19 = COVID()
