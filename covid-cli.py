@@ -31,7 +31,8 @@ class COVID(object):
     def __init__(self):
         self.covid_data = OrderedDict()
         self._covidObject = Covid(source="john_hopkins")
-        self.sql_string = "INSERT INTO covid_data_us VALUES (%s, %s, %s, %s, %s)"
+        self.sql_string_insert_US = "INSERT INTO covid_data_us VALUES (%s, %s, %s, %s, %s)"
+        self.sql_string_insert_GLOBAL = "INSERT INTO covid_data_global VALUES (%s, %s, %s, %s, %s)"
         self.current_date = datetime.today().strftime('%Y-%m-%d')
 
     def _getCOVID_databyCountry(self, country_ID):
@@ -42,6 +43,7 @@ class COVID(object):
         return values
 
     def _getAllData(self):
+        values = []
         global_data = self._covidObject.get_data()
         for elem in global_data:
             for key, value in elem.items():
@@ -55,12 +57,15 @@ class COVID(object):
                     deaths = value
                 if key == 'recovered':
                     recovered = value
-        values = (country, confirmed, active, deaths, recovered)
+            values.append((country, confirmed, active, deaths, recovered))
         return values
 
-    def insert_mySQL(self, values):
+    def insert_mySQL(self, values, table, many=False):
         try:
-            mysql_object().mySQL.execute(self.sql_string, values)
+            if many:
+                mysql_object().mySQL.executemany(table, values)
+            else:
+                mysql_object().mySQL.execute(table, values)
             mysql_object().myDB.commit()
             print(colors().prGreen('Inserted Successfully'))
             return True
@@ -69,7 +74,9 @@ class COVID(object):
 
     def main(self):
         covid_19 = COVID()
-        covid_19.insert_mySQL(covid_19._getCOVID_databyCountry(18))
+        #covid_19.insert_mySQL(covid_19._getCOVID_databyCountry(18), self.sql_string_insert_US)
+        covid_19.insert_mySQL(covid_19._getAllData(),
+                              self.sql_string_insert_GLOBAL, True)
 
 
 if __name__ == '__main__':
