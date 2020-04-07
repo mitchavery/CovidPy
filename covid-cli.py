@@ -7,6 +7,10 @@ from datetime import datetime
 current_date = datetime.today().strftime('%Y-%m-%d')
 
 
+def place_value(number):
+    return ("{:,}".format(number))
+
+
 class mysql_object(object):
 
     def __init__(self):
@@ -93,10 +97,10 @@ class COVID(object):
             print(colors().prGreen('Deleted values successfully'))
         except Exception as error:
             print('{} error while deleting'.format(error))
-            
+
     def get_max(self, sql_string):
         max = None
-        try: 
+        try:
             if 'confirmed' in sql_string:
                 value = 'confirmed'
             if 'deaths' in sql_string:
@@ -104,10 +108,27 @@ class COVID(object):
             mysql_object().mySQL.execute(sql_string)
             result = mysql_object().mySQL.fetchone()
             max = result
-        except Exception as error: 
+        except Exception as error:
             print('{} error in getting max {}'.format(error, value))
         return max
-        
+
+    def _CountryWithMaxDeaths(self, max_deaths_tuple):
+        return 'The country with the max deaths currently is {} with {} deaths'.format(
+            max_deaths_tuple[0], place_value(max_deaths_tuple[1]))
+
+    def _CountryWithMaxConfirmed(self, max_confirmed_tuple):
+        return 'The country with the max confirmed cases currently is {} with {} cases'.format(
+            max_confirmed_tuple[0], place_value(max_confirmed_tuple[1]))
+
+    def _getTotalStats(self):
+        total_stats = {
+            'total_active_cases': self._covidObject.get_total_active_cases(),
+            'total_confirmed_cases': self._covidObject.get_total_confirmed_cases(),
+            'total_recovered_cases': self._covidObject.get_total_recovered(),
+            'total_deaths': self._covidObject.get_total_deaths()
+        }
+        return total_stats
+
     def main(self):
         covid_19 = COVID()
         print('--------------COVID Program Running-------------------')
@@ -117,7 +138,11 @@ class COVID(object):
             18), self.sql_scripts['insert_us'])
         covid_19.insert_mySQL(covid_19._getAllData(),
                               self.sql_scripts['insert_global'], True)
-        print(covid_19.get_max(self.sql_scripts['get_max_deaths']))
+        covid_19._CountryWithMaxDeaths(
+            covid_19.get_max(self.sql_scripts['get_max_deaths']))
+        covid_19._CountryWithMaxConfirmed(
+            covid_19.get_max(self.sql_scripts['get_max_confirmed']))
+
 
 if __name__ == '__main__':
     COVID().main()
