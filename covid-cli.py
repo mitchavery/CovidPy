@@ -129,6 +129,22 @@ class COVID(object):
         }
         return total_stats
 
+    def printDailyStatusReport(self, total_stats, country_max_deaths, country_max_confirmed):
+        daily_report = """
+        Here is the COVID-19 for today {date}: 
+        
+        Total Active Cases: {active_cases}
+        Total Confirmed Cases: {confirmed_cases}
+        Total Recovered Cases: {recovered_cases}
+        Total Deaths: {deaths}
+        
+        {max_deaths}
+        {max_confirmed}
+        """.format(date=current_date, active_cases=total_stats['total_active_cases'],
+                   confirmed_cases=total_stats['total_confirmed_cases'], recovered_cases=total_stats['total_recovered_cases'],
+                   deaths=total_stats['total_deaths'], max_deaths=country_max_deaths, max_confirmed=country_max_confirmed)
+        return daily_report
+
     def main(self):
         covid_19 = COVID()
         print('--------------COVID Program Running-------------------')
@@ -138,10 +154,12 @@ class COVID(object):
             18), self.sql_scripts['insert_us'])
         covid_19.insert_mySQL(covid_19._getAllData(),
                               self.sql_scripts['insert_global'], True)
-        covid_19._CountryWithMaxDeaths(
+        max_deaths = covid_19._CountryWithMaxDeaths(
             covid_19.get_max(self.sql_scripts['get_max_deaths']))
-        covid_19._CountryWithMaxConfirmed(
+        max_confirmed = covid_19._CountryWithMaxConfirmed(
             covid_19.get_max(self.sql_scripts['get_max_confirmed']))
+        print(covid_19.printDailyStatusReport(
+            covid_19._getTotalStats(), max_deaths, max_confirmed))
 
 
 if __name__ == '__main__':
