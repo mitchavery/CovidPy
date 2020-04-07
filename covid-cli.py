@@ -43,6 +43,7 @@ class COVID(object):
             'delete_global': "DELETE FROM covid_data_global",
             'get_max_confirmed': "SELECT country, confirmed FROM covid_data_global WHERE confirmed = (SELECT MAX(confirmed) from covid_data_global)",
             'get_max_deaths': "SELECT country, deaths FROM covid_data_global WHERE deaths = (SELECT MAX(deaths) from covid_data_global)",
+            'get_countries': "SELECT country FROM covid_data_global"
         }
 
     def _getCOVID_databyCountry(self, country_ID):
@@ -129,6 +130,31 @@ class COVID(object):
         }
         return total_stats
 
+    def _validateCountry(self, input_country):
+        countries = []
+        try:
+            mysql_object().mySQL.execute(self.sql_scripts['get_countries'])
+            result = mysql_object().mySQL.fetchall()  # returns a list of tuples
+            for element in result:
+                countries.append(element[0].lower())
+            if input_country in countries:
+                return True
+            return False
+        except Exception as error:
+            print('Error validating country {}'.format(error))
+
+    def _getDataForCountry(self):
+        success = False
+        while not success:
+            country = input(colors().prGreen('Country to look up for COVID info: ')).strip().lower()
+            if self._validateCountry(country):
+                success = True
+            else:
+                print('please enter a correct country')
+        country_status = self._covidObject.get_status_by_country_name(country)
+        for keys, values in country_status.items():
+            print('{}: {}'.format(keys, values))
+
     def printDailyStatusReport(self, total_stats, country_max_deaths, country_max_confirmed):
         daily_report = """
         Here is the COVID-19 for today {date}: 
@@ -160,6 +186,7 @@ class COVID(object):
             covid_19.get_max(self.sql_scripts['get_max_confirmed']))
         print(covid_19.printDailyStatusReport(
             covid_19._getTotalStats(), max_deaths, max_confirmed))
+        covid_19._getDataForCountry()
 
 
 if __name__ == '__main__':
