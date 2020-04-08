@@ -1,5 +1,7 @@
 import mysql.connector
+import matplotlib.pyplot as plt
 import mySQL
+import sys
 from covid import Covid  # covid API
 from collections import OrderedDict
 from datetime import datetime
@@ -37,13 +39,14 @@ class COVID(object):
     def __init__(self):
         self._covidObject = Covid(source="john_hopkins")
         self.sql_scripts = {
-            'insert_us': "INSERT INTO covid_data_us VALUES (%s, %s, %s, %s, %s, %s)",
+            'insert_us': "INSERT INTO covid_data_us (confirmed, active, deaths, recovered, death_rate, day) VALUES (%s, %s, %s, %s, %s, %s)",
             'insert_global': "INSERT INTO covid_data_global VALUES (%s, %s, %s, %s, %s)",
             'delete_us': "DELETE FROM covid_data_us",
             'delete_global': "DELETE FROM covid_data_global",
             'get_max_confirmed': "SELECT country, confirmed FROM covid_data_global WHERE confirmed = (SELECT MAX(confirmed) from covid_data_global)",
             'get_max_deaths': "SELECT country, deaths FROM covid_data_global WHERE deaths = (SELECT MAX(deaths) from covid_data_global)",
-            'get_countries': "SELECT country FROM covid_data_global"
+            'get_countries': "SELECT country FROM covid_data_global",
+            'get_us_data': "SELECT * FROM covid_data_us"
         }
 
     def _getCOVID_databyCountry(self, country_ID):
@@ -51,9 +54,22 @@ class COVID(object):
         confirmed, active, deaths, recovered = country_cases['confirmed'], country_cases[
             'active'], country_cases['deaths'], country_cases['recovered']
         death_rate = self._getCurrentDeathRate()
-        values = (current_date, confirmed, active,
-                  deaths, recovered, death_rate)
+        values = (confirmed, active,
+                  deaths, recovered, death_rate, current_date)
         return values
+
+    def _getALLDataForUs(self):
+        deaths_days = {
+            "deaths": [],
+            "days": []
+        }
+        mysql_object().mySQL.execute(self.sql_scripts['get_us_data'])
+        result = mysql_object().mySQL.fetchall()
+        for entry in result:
+            deaths, day_num = entry[2], entry[len(entry) - 1]
+            deaths_days['deaths'].append(deaths)
+            deaths_days['days'].append(day_num)
+        return deaths_days
 
     def _getAllData(self):
         values = []
@@ -171,7 +187,6 @@ class COVID(object):
                 values = place_value(values)
             if keys.capitalize() not in not_print:
                 print('{}: {}'.format(keys.capitalize(), values))
-                
 
     def printDailyStatusReport(self, total_stats, country_max_deaths, country_max_confirmed):
         daily_report = """
@@ -189,10 +204,19 @@ class COVID(object):
                    deaths=total_stats['total_deaths'], max_deaths=country_max_deaths, max_confirmed=country_max_confirmed)
         return daily_report
 
+    def plotDataForUSStats(self, us_data):
+        deaths_data = us_data['deaths']
+        day_nums = us_data['days']
+        plt.plot(day_nums, deaths_data) 
+        plt.xlabel('Days') 
+        plt.ylabel('Deaths') 
+        plt.title('COVID deaths vs Day #') 
+        plt.show() 
+
     def main(self):
         covid_19 = COVID()
         print('--------------COVID Program Running-------------------')
-        covid_19.delete_mySQL(self.sql_scripts['delete_us'])
+        # covid_19.delete_mySQL(self.sql_scripts['delete_us'])
         covid_19.delete_mySQL(self.sql_scripts['delete_global'])
         covid_19.insert_mySQL(covid_19._getCOVID_databyCountry(
             18), self.sql_scripts['insert_us'])
@@ -205,6 +229,8 @@ class COVID(object):
         print(covid_19.printDailyStatusReport(
             covid_19._getTotalStats(), max_deaths, max_confirmed))
         covid_19._getDataForCountry()
+        covid_19.plotDataForUSStats(covid_19._getALLDataForUs())
+        sys.exit()
 
 
 if __name__ == '__main__':
