@@ -37,7 +37,7 @@ class COVID(object):
     def __init__(self):
         self._covidObject = Covid(source="john_hopkins")
         self.sql_scripts = {
-            'insert_us': "INSERT INTO covid_data_us VALUES (%s, %s, %s, %s, %s)",
+            'insert_us': "INSERT INTO covid_data_us VALUES (%s, %s, %s, %s, %s, %s)",
             'insert_global': "INSERT INTO covid_data_global VALUES (%s, %s, %s, %s, %s)",
             'delete_us': "DELETE FROM covid_data_us",
             'delete_global': "DELETE FROM covid_data_global",
@@ -50,7 +50,9 @@ class COVID(object):
         country_cases = self._covidObject.get_status_by_country_id(country_ID)
         confirmed, active, deaths, recovered = country_cases['confirmed'], country_cases[
             'active'], country_cases['deaths'], country_cases['recovered']
-        values = (current_date, confirmed, active, deaths, recovered)
+        death_rate = self._getCurrentDeathRate()
+        values = (current_date, confirmed, active,
+                  deaths, recovered, death_rate)
         return values
 
     def _getAllData(self):
@@ -143,7 +145,18 @@ class COVID(object):
         except Exception as error:
             print('Error validating country {}'.format(error))
 
+    def _getCurrentDeathRate(self):
+        confirmed, deaths = self._getDataForUS()
+        death_rate = (deaths / confirmed) * 100
+        return death_rate
+
+    def _getDataForUS(self):
+        us_status = self._covidObject.get_status_by_country_id(18)
+        confirmed, deaths = us_status['confirmed'], us_status['deaths']
+        return confirmed, deaths
+
     def _getDataForCountry(self):
+        result = ""
         success = False
         while not success:
             country = input(colors().prGreen(
@@ -154,7 +167,10 @@ class COVID(object):
                 print('please enter a correct country')
         country_status = self._covidObject.get_status_by_country_name(country)
         for keys, values in country_status.items():
-            print('{}: {}'.format(keys, values))
+            if isinstance(values, int):
+                values = place_value(values)
+            print('{}: {}'.format(keys.capitalize(), values))
+        
 
     def printDailyStatusReport(self, total_stats, country_max_deaths, country_max_confirmed):
         daily_report = """
