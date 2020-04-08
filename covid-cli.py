@@ -156,7 +156,7 @@ class COVID(object):
         return confirmed, deaths
 
     def _getDataForCountry(self):
-        result = ""
+        not_print = ['Id', 'Latitude', 'Longitude', 'Last_update']
         success = False
         while not success:
             country = input(colors().prGreen(
@@ -169,8 +169,9 @@ class COVID(object):
         for keys, values in country_status.items():
             if isinstance(values, int):
                 values = place_value(values)
-            print('{}: {}'.format(keys.capitalize(), values))
-        
+            if keys.capitalize() not in not_print:
+                print('{}: {}'.format(keys.capitalize(), values))
+                
 
     def printDailyStatusReport(self, total_stats, country_max_deaths, country_max_confirmed):
         daily_report = """
