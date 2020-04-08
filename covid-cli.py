@@ -146,7 +146,8 @@ class COVID(object):
     def _getDataForCountry(self):
         success = False
         while not success:
-            country = input(colors().prGreen('Country to look up for COVID info: ')).strip().lower()
+            country = input(colors().prGreen(
+                'Country to look up for COVID info: ')).strip().lower()
             if self._validateCountry(country):
                 success = True
             else:
