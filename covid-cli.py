@@ -2,6 +2,7 @@ import mysql.connector
 import matplotlib.pyplot as plt
 import mySQL
 import sys
+from pygal.maps.world import World
 from covid import Covid  # covid API
 from collections import OrderedDict
 from datetime import datetime
@@ -59,17 +60,20 @@ class COVID(object):
         return values
 
     def _getALLDataForUs(self):
-        deaths_days = {
+        us_data = {
+            "confirmed": [],
             "deaths": [],
             "days": []
         }
         mysql_object().mySQL.execute(self.sql_scripts['get_us_data'])
         result = mysql_object().mySQL.fetchall()
         for entry in result:
-            deaths, day_num = entry[2], entry[len(entry) - 1]
-            deaths_days['deaths'].append(deaths)
-            deaths_days['days'].append(day_num)
-        return deaths_days
+            confirmed, deaths, day_num = entry[0], entry[2], entry[len(
+                entry) - 1]
+            us_data['confirmed'].append(confirmed)
+            us_data['deaths'].append(deaths)
+            us_data['days'].append(day_num)
+        return us_data
 
     def _getAllData(self):
         values = []
@@ -204,14 +208,25 @@ class COVID(object):
                    deaths=total_stats['total_deaths'], max_deaths=country_max_deaths, max_confirmed=country_max_confirmed)
         return daily_report
 
-    def plotDataForUSStats(self, us_data):
+    def _graphDataForUSStats(self, us_data):
         deaths_data = us_data['deaths']
+        confirmed_data = us_data['confirmed']
         day_nums = us_data['days']
-        plt.plot(day_nums, deaths_data) 
-        plt.xlabel('Days') 
-        plt.ylabel('Deaths') 
-        plt.title('COVID deaths vs Day #') 
-        plt.show() 
+        plt.plot(day_nums, deaths_data, label="line 1", color='red', linestyle='dashed', linewidth=1,
+                 marker='o', markerfacecolor='blue', markersize=2)
+        plt.xlabel('Days')
+        plt.ylabel('Deaths')
+        plt.title('COVID deaths/Confirmed vs Days')
+        plt.show()
+
+    def _plotDataWorldMap(self):
+        print('Running world map')
+        wm = World()
+        wm.force_uri_protocol = 'http'
+        wm.title="Covid Spread over time"
+        wm.add('North America',{'ca': 84949494949,'mx': 494794164,'us': 99794616})
+        wm.render_to_file('map.svg')
+        
 
     def main(self):
         covid_19 = COVID()
@@ -229,7 +244,8 @@ class COVID(object):
         print(covid_19.printDailyStatusReport(
             covid_19._getTotalStats(), max_deaths, max_confirmed))
         covid_19._getDataForCountry()
-        covid_19.plotDataForUSStats(covid_19._getALLDataForUs())
+        covid_19._graphDataForUSStats(covid_19._getALLDataForUs())
+        #covid_19._plotDataWorldMap()
         sys.exit()
 
 
