@@ -69,7 +69,7 @@ class COVID(object):
         result = mysql_object().mySQL.fetchall()
         for entry in result:
             confirmed, deaths, day_num = entry[0], entry[2], entry[len(
-                entry) - 1]
+                entry) - 2]
             us_data['confirmed'].append(confirmed)
             us_data['deaths'].append(deaths)
             us_data['days'].append(day_num)
@@ -244,8 +244,8 @@ class COVID(object):
         print(covid_19.printDailyStatusReport(
             covid_19._getTotalStats(), max_deaths, max_confirmed))
         covid_19._getDataForCountry()
-        covid_19._graphDataForUSStats(covid_19._getALLDataForUs())
-        #covid_19._plotDataWorldMap()
+        #covid_19._graphDataForUSStats(covid_19._getALLDataForUs())
+        covid_19._plotDataWorldMap()
         sys.exit()
 
 
