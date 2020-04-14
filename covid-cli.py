@@ -2,6 +2,8 @@ import mysql.connector
 import matplotlib.pyplot as plt
 import mySQL
 import sys
+import pygal
+import countries_list
 from pygal.maps.world import World
 from covid import Covid  # covid API
 from collections import OrderedDict
@@ -14,7 +16,7 @@ def place_value(number):
     return ("{:,}".format(number))
 
 
-class mysql_object(object):
+class mysql_object:
 
     def __init__(self):
         self.mySQL = mySQL.mycursor
@@ -47,7 +49,8 @@ class COVID(object):
             'get_max_confirmed': "SELECT country, confirmed FROM covid_data_global WHERE confirmed = (SELECT MAX(confirmed) from covid_data_global)",
             'get_max_deaths': "SELECT country, deaths FROM covid_data_global WHERE deaths = (SELECT MAX(deaths) from covid_data_global)",
             'get_countries': "SELECT country FROM covid_data_global",
-            'get_us_data': "SELECT * FROM covid_data_us"
+            'get_us_data': "SELECT * FROM covid_data_us",
+            'get_global_data': "SELECT * FROM covid_data_global"
         }
 
     def _getCOVID_databyCountry(self, country_ID):
@@ -65,15 +68,30 @@ class COVID(object):
             "deaths": [],
             "days": []
         }
-        mysql_object().mySQL.execute(self.sql_scripts['get_us_data'])
-        result = mysql_object().mySQL.fetchall()
-        for entry in result:
-            confirmed, deaths, day_num = entry[0], entry[2], entry[len(
-                entry) - 2]
-            us_data['confirmed'].append(confirmed)
-            us_data['deaths'].append(deaths)
-            us_data['days'].append(day_num)
+        try:
+            mysql_object().mySQL.execute(self.sql_scripts['get_us_data'])
+            result = mysql_object().mySQL.fetchall()
+            for entry in result:
+                confirmed, deaths, day_num = entry[0], entry[2], entry[len(
+                    entry) - 2]
+                us_data['confirmed'].append(confirmed)
+                us_data['deaths'].append(deaths)
+                us_data['days'].append(day_num)
+        except Exception as error:
+            print("Error getting US data: {}".format(error))
         return us_data
+
+    def _getGlobalData(self):
+        global_data = {}
+        try:
+            mysql_object().mySQL.execute(self.sql_scripts['get_global_data'])
+            result = mysql_object().mySQL.fetchall()
+            for entry in result:
+                country, confirmed = entry[0], entry[1]
+                global_data[country] = confirmed
+        except Exception as error:
+            print('Error getting Global data: {}'.format(error))
+        return global_data
 
     def _getAllData(self):
         values = []
@@ -218,15 +236,30 @@ class COVID(object):
         plt.ylabel('Deaths')
         plt.title('COVID deaths/Confirmed vs Days')
         plt.show()
+        
+    def _pairCountries(self):
+        countries_list_pairs = {}
+        # countries/confirmed are both lists
+        # dict contains countries and confirmed cases from JH API
+        countries_dict = self._getGlobalData()
+        # dict contains country name and country code
+        available_countries = countries_list.countries
+        for country in countries_dict.keys(): 
+            if country in available_countries: 
+                countries_list_pairs[available_countries[country]] = countries_dict[country]
+        return countries_list_pairs
+        
 
     def _plotDataWorldMap(self):
-        print('Running world map')
-        wm = World()
-        wm.force_uri_protocol = 'http'
-        wm.title="Covid Spread over time"
-        wm.add('North America',{'ca': 84949494949,'mx': 494794164,'us': 99794616})
-        wm.render_to_file('map.svg')
-        
+        try:
+            worldmap_chart = pygal.maps.world.World()
+            worldmap_chart.title = 'COVID Active Cases Per Country'
+            worldmap_chart.force_uri_protocol = "http"
+            worldmap_chart.add('', self._pairCountries())
+            worldmap_chart.render_in_browser()
+            worldmap_chart.render_to_file('map.svg')
+        except Exception as Error:
+            print('Error found: {}'.format(Error))
 
     def main(self):
         covid_19 = COVID()
