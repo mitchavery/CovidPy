@@ -257,14 +257,14 @@ class COVID(object):
 
     def _plotDataWorldMap(self):
         try:
-            worldmap_chart = pygal.maps.world.World()
-            worldmap_chart.title = 'COVID Active Cases Per Country'
-            worldmap_chart.force_uri_protocol = "http"
+            worldmap_chart_confirmed, worldmap_chart_deaths = pygal.maps.world.World(), pygal.maps.world.World()
+            worldmap_chart_confirmed.title, worldmap_chart_deaths.title = 'COVID Active Cases Per Country', 'COVID Active Cases Per Country'
+            worldmap_chart_confirmed.force_uri_protocol, worldmap_chart_deaths.force_uri_protocol = "http", "http"
             confirmed, deaths = self._pairCountries()
-            worldmap_chart.add('Confirmed', confirmed)
-            worldmap_chart.add('Deaths', deaths)
-            worldmap_chart.render_in_browser()
-            worldmap_chart.render_to_file('map.svg')
+            worldmap_chart_confirmed.add('Confirmed', confirmed)
+            worldmap_chart_deaths.add('Deaths', deaths)
+            worldmap_chart_confirmed.render_in_browser()
+            worldmap_chart_deaths.render_in_browser()
         except Exception as Error:
             print('Error found: {}'.format(Error))
 
