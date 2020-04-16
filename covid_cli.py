@@ -82,16 +82,18 @@ class COVID(object):
         return us_data
 
     def _getGlobalData(self):
-        global_data = {}
+        global_data_confirmed = {}
+        global_data_deaths = {}
         try:
             mysql_object().mySQL.execute(self.sql_scripts['get_global_data'])
             result = mysql_object().mySQL.fetchall()
             for entry in result:
-                country, confirmed = entry[0], entry[1]
-                global_data[country] = confirmed
+                country, confirmed, deaths = entry[0], entry[1], entry[3]
+                global_data_confirmed[country] = confirmed
+                global_data_deaths[country] = deaths
         except Exception as error:
             print('Error getting Global data: {}'.format(error))
-        return global_data
+        return global_data_confirmed, global_data_deaths
 
     def _getAllData(self):
         values = []
@@ -238,16 +240,19 @@ class COVID(object):
         plt.show()
         
     def _pairCountries(self):
-        countries_list_pairs = {}
+        countries_list_pairs_confirmed, countries_list_pairs_deaths = {}, {}
         # countries/confirmed are both lists
         # dict contains countries and confirmed cases from JH API
-        countries_dict = self._getGlobalData()
+        countries_dict_confirmed, countries_dict_deaths = self._getGlobalData()
         # dict contains country name and country code
         available_countries = countries_list.countries
-        for country in countries_dict.keys(): 
+        for country in countries_dict_confirmed.keys(): 
             if country in available_countries: 
-                countries_list_pairs[available_countries[country]] = countries_dict[country]
-        return countries_list_pairs
+                countries_list_pairs_confirmed[available_countries[country]] = countries_dict_confirmed[country]
+        for country1 in countries_dict_deaths.keys():
+            if country1 in available_countries: 
+                countries_list_pairs_deaths[available_countries[country1]] = countries_dict_deaths[country1]
+        return countries_list_pairs_confirmed, countries_list_pairs_deaths
         
 
     def _plotDataWorldMap(self):
@@ -255,7 +260,9 @@ class COVID(object):
             worldmap_chart = pygal.maps.world.World()
             worldmap_chart.title = 'COVID Active Cases Per Country'
             worldmap_chart.force_uri_protocol = "http"
-            worldmap_chart.add('', self._pairCountries())
+            confirmed, deaths = self._pairCountries()
+            worldmap_chart.add('Confirmed', confirmed)
+            worldmap_chart.add('Deaths', deaths)
             worldmap_chart.render_in_browser()
             worldmap_chart.render_to_file('map.svg')
         except Exception as Error:
@@ -277,7 +284,7 @@ class COVID(object):
         print(covid_19.printDailyStatusReport(
             covid_19._getTotalStats(), max_deaths, max_confirmed))
         covid_19._getDataForCountry()
-        #covid_19._graphDataForUSStats(covid_19._getALLDataForUs())
+        covid_19._graphDataForUSStats(covid_19._getALLDataForUs())
         covid_19._plotDataWorldMap()
         sys.exit()
 
